@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,8 +57,13 @@ fun CanvasParticlesScreen() {
         }
     }
 
+    LaunchedEffect(simulation) {
+        // The small 8.dp-per-meter scale needs stronger gravity to move briskly on screen.
+        simulation.setGravity(Offset(0f, EARTH_GRAVITY * PARTICLE_GRAVITY_MULTIPLIER))
+    }
+
     GravitySensor { (x, y) ->
-        simulation.setGravity(Offset(-x, y).times(3f))
+        simulation.setGravity(Offset(-x, y).times(PARTICLE_GRAVITY_MULTIPLIER))
     }
 
     Surface(
@@ -93,3 +99,6 @@ fun CanvasParticlesScreen() {
         }
     }
 }
+
+private const val EARTH_GRAVITY = 9.81f
+private const val PARTICLE_GRAVITY_MULTIPLIER = 12f

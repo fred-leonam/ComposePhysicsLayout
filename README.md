@@ -126,6 +126,8 @@ PhysicsCanvas(
 
 Pass `drawBody` when sprites need custom Canvas rendering. Per-body composable semantics and input
 belong on `physicsBody`; high-count Canvas sprites should use centralized interaction handling.
+Because `scale` also converts physical acceleration to screen distance, very small scale values may
+need proportionally stronger gravity for a fast visual particle effect.
 
 ### Change gravity
 If you need to change the gravity of the simulated world, use `Simulation.setGravity`
