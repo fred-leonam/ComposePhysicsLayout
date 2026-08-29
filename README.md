@@ -3,6 +3,20 @@
 
 This library offers a [dyn4j](https://www.dyn4j.org) wrapper for [Jetpack Compose](https://developer.android.com/jetpack/compose).
 
+## About this fork
+
+This repository is a fork of [KlassenKonstantin/ComposePhysicsLayout](https://github.com/KlassenKonstantin/ComposePhysicsLayout), originally created by Konstantin Klassen. I forked the project to explore how its Compose and dyn4j integration could support many lightweight physics objects without requiring one Composable for every object.
+
+The work that followed has focused on:
+
+- Adding `PhysicsCanvas`, which simulates many dyn4j bodies while drawing them through a single Compose `Canvas`.
+- Keeping the original `physicsBody` API for rich, interactive Composables and allowing both rendering approaches to share one simulation.
+- Publishing transformations as one observable frame and pacing simulation updates with the display frame clock.
+- Cleaning up removed transformations and drag joints, fixing border caching, and improving body/effect synchronization.
+- Adding a 300-particle Canvas demonstration and a gravity-sensor-controlled circular maze with false paths and dead ends.
+
+The goal is not to replace the original Composable-based API. It is to provide a hybrid approach: use `physicsBody` for complex UI elements and `PhysicsCanvasBody` for large collections of simple particles, sprites, walls, or game objects.
+
 ## 🚧 Experimental 🚧
 Before reaching version 1.0, this library is considered experimental, which means that there is no guaranteed backwards compatibility between versions. Signatures, interfaces, names, etc. may and will most likely change.
 
@@ -15,6 +29,10 @@ dependencies {
     implementation 'io.github.klassenkonstantin:physics-layout:<version>'
 }
 ```
+
+> The Maven Central coordinate above belongs to the original upstream project. The fork-only
+> `PhysicsCanvas` API and samples must currently be built from this repository or published under
+> a separate artifact coordinate.
 
 # How to use
 To get started, create a `PhysicsLayout` and add arbitrary content to it. Add the `physicsBody` modifier to Composables that should be part of the physics simulation.
@@ -129,6 +147,10 @@ belong on `physicsBody`; high-count Canvas sprites should use centralized intera
 Because `scale` also converts physical acceleration to screen distance, very small scale values may
 need proportionally stronger gravity for a fast visual particle effect.
 
+The sample app also contains a small tilt-controlled **Canvas Maze** game. Its player and static
+maze walls are `PhysicsCanvasBody` values, the green goal is drawn with `drawBackground`, and
+`onBodyState` handles goal detection without creating a Composable for every physics object.
+
 ### Change gravity
 If you need to change the gravity of the simulated world, use `Simulation.setGravity`
 
@@ -136,5 +158,5 @@ If you need to change the gravity of the simulated world, use `Simulation.setGra
 - Use `PhysicsCanvas` instead of one Composable per body for high-count particle-like effects.
 - In general, what is true for all of Compose is especially true for this Layout: **Release builds perform way better than debug builds**.
 - State is not restored on config changes 😱.
-- Currently there is no way to observe bodies / collosions / etc.
+- Canvas body transforms can be observed with `onBodyState`; collision callbacks and equivalent observation for Composable bodies are not yet exposed.
 - Not tested with scrolling containers
