@@ -4,8 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import de.apuri.physicslayout.lib.BodyConfig
 import de.apuri.physicslayout.lib.drag.DefaultDragHandler
@@ -19,7 +21,19 @@ class Simulation internal constructor(
     private val world: World<SimulationEntity<*>>,
     private val clock: Clock,
 ) {
-    internal val transformations = mutableStateMapOf<String, SimulationTransformation>()
+    /**
+     * Transformations are stored in a reusable non-snapshot map and published as one frame. The
+     * simulation and Compose draw callbacks both run on the UI thread, so readers cannot observe a
+     * partially updated map. This avoids one snapshot-state object/write per canvas body.
+     */
+    private val transformations = mutableMapOf<String, SimulationTransformation>()
+    private var transformationVersion by mutableStateOf(0)
+        private set
+
+    internal fun currentTransformations(): Map<String, SimulationTransformation> {
+        transformationVersion
+        return transformations
+    }
 
     private val bodyManager = BodyManager(world)
     private val borderManager = BorderManager(world)
@@ -37,11 +51,10 @@ class Simulation internal constructor(
     }
 
     private fun updateTransformations() {
-        bodyManager.bodies.mapValues {
-            it.value.getTransformation()
-        }.also {
-            transformations.putAll(it)
+        bodyManager.bodies.forEach { (id, body) ->
+            transformations[id] = body.getTransformation()
         }
+        transformationVersion++
     }
 
     internal fun syncSimulationBorder(simulationBorder: SimulationBorder) {
@@ -49,7 +62,9 @@ class Simulation internal constructor(
     }
 
     internal fun syncSimulationBody(id: String, body: SimulationBody?) {
+        if (body == null) bodyManager.bodies[id]?.let(dragHandler::removeBody)
         bodyManager.syncBody(id, body)
+        if (body == null && transformations.remove(id) != null) transformationVersion++
     }
 
     internal fun drag(bodyId: String, touchEvent: SimulationTouchEvent, dragConfig: DragConfig) {
@@ -93,6 +108,7 @@ internal data class SimulationBody(
     val height: Double,
     val shape: SimulationShape,
     val initialOffset: Vector2,
+    val initialRotationDegrees: Double = 0.0,
     val bodyConfig: BodyConfig,
 )
 

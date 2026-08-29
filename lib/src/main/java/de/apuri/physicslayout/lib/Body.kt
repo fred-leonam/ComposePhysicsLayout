@@ -43,7 +43,7 @@ fun Modifier.physicsBody(
     val layoutOffset = remember { mutableStateOf(Offset.Zero) }
     var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
-    LaunchedEffect(coordinates, bodyConfig) {
+    LaunchedEffect(coordinates, shape, bodyConfig, simulation, layoutToSimulation, bodyId) {
         coordinates?.let {
             val (body, offsetFromCenter) = layoutToSimulation.convertBody(
                 coordinates = it,
@@ -55,7 +55,7 @@ fun Modifier.physicsBody(
         }
     }
 
-    DisposableEffect(id) {
+    DisposableEffect(simulation, bodyId) {
         onDispose {
             simulation.syncSimulationBody(bodyId, null)
         }
@@ -65,7 +65,7 @@ fun Modifier.physicsBody(
         coordinates = it
     }
         .graphicsLayer {
-            simulation.transformations[bodyId]?.let {
+            simulation.currentTransformations()[bodyId]?.let {
                 val transformation = simulationToLayout.convertTransformation(
                     offset = layoutOffset.value,
                     simulationTransformation = it

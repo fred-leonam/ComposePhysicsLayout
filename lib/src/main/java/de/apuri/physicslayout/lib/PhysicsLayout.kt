@@ -39,7 +39,7 @@ fun PhysicsLayout(
     val density = LocalDensity.current
     val scalePx = density.run { scale.toPx().toDouble() }
 
-    val layoutToSimulation = remember(density) {
+    val layoutToSimulation = remember(density, scalePx) {
         LayoutToSimulation(density, scalePx)
     }
 

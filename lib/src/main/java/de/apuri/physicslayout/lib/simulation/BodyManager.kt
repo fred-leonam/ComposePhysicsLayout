@@ -27,6 +27,7 @@ internal class BodyManager(
         bodies.getOrPut(id) {
             Body().apply {
                 translate(body.initialOffset)
+                rotate(Math.toRadians(body.initialRotationDegrees))
                 world.addBody(this)
             }
         }.apply {

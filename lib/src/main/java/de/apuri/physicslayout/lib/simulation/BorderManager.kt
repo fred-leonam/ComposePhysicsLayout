@@ -17,5 +17,6 @@ internal class BorderManager(
         if (currentBorder == newBorder) return
 
         borderSimulationEntity.updateFrom(newBorder)
+        currentBorder = newBorder
     }
 }

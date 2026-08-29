@@ -88,11 +88,50 @@ This example adds a ball with a star in the center of the layout, which then sta
 
 > Note: The `shape` must be set on both the body modifier and the `Card`.
 
+## PhysicsCanvas
+
+Use `PhysicsCanvas` for hundreds of simple physics sprites. It registers normal dyn4j bodies but
+draws the whole collection through one Compose `Canvas`, avoiding a composable, graphics layer, and
+pointer-input modifier for every sprite. Its optional content block can still contain rich bodies
+using `physicsBody`, so both rendering paths can share one simulation:
+
+```kotlin
+val simulation = rememberSimulation()
+val particles = remember {
+    List(300) { index ->
+        PhysicsCanvasBody(
+            id = "particle-$index",
+            size = DpSize(8.dp, 8.dp),
+            initialOffset = DpOffset((index % 20 * 10).dp, (index / 20 * 10).dp),
+            color = Color.Cyan,
+        )
+    }
+}
+
+PhysicsCanvas(
+    bodies = particles,
+    modifier = Modifier.fillMaxSize(),
+    scale = 8.dp,
+    simulation = simulation,
+) {
+    Card(
+        Modifier
+            .align(Alignment.Center)
+            .physicsBody(shape = CircleShape)
+    ) {
+        Text("Rich composable")
+    }
+}
+```
+
+Pass `drawBody` when sprites need custom Canvas rendering. Per-body composable semantics and input
+belong on `physicsBody`; high-count Canvas sprites should use centralized interaction handling.
+
 ### Change gravity
 If you need to change the gravity of the simulated world, use `Simulation.setGravity`
 
 ## Caveats, notes, missing features
-- I don't think Compose was made to display hundreds of Composables at the same time. So maybe it's not a good idea to build a particle system out of this.
+- Use `PhysicsCanvas` instead of one Composable per body for high-count particle-like effects.
 - In general, what is true for all of Compose is especially true for this Layout: **Release builds perform way better than debug builds**.
 - State is not restored on config changes 😱.
 - Currently there is no way to observe bodies / collosions / etc.

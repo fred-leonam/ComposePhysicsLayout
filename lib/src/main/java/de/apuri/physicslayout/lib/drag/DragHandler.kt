@@ -12,6 +12,8 @@ internal interface DragHandler {
         touchEvent: SimulationTouchEvent,
         dragConfig: DragConfig
     )
+
+    fun removeBody(body: SimulationEntity.Body)
 }
 
 internal class DefaultDragHandler(
@@ -41,7 +43,20 @@ internal class DefaultDragHandler(
             }
 
             TouchType.UP -> {
-                world.removeJoint(joints.remove(key) as Joint<SimulationEntity<*>>)
+                joints.remove(key)?.let {
+                    world.removeJoint(it as Joint<SimulationEntity<*>>)
+                }
+            }
+        }
+    }
+
+    override fun removeBody(body: SimulationEntity.Body) {
+        val iterator = joints.iterator()
+        while (iterator.hasNext()) {
+            val (key, joint) = iterator.next()
+            if (key.body === body) {
+                world.removeJoint(joint as Joint<SimulationEntity<*>>)
+                iterator.remove()
             }
         }
     }
